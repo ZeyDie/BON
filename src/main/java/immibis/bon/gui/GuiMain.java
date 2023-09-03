@@ -1,26 +1,5 @@
 package immibis.bon.gui;
 
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.prefs.Preferences;
-import javax.swing.*;
 import immibis.bon.ClassCollection;
 import immibis.bon.IProgressListener;
 import immibis.bon.NameSet;
@@ -30,6 +9,18 @@ import immibis.bon.io.ClassCollectionFactory;
 import immibis.bon.io.JarWriter;
 import immibis.bon.io.MappingFactory;
 import immibis.bon.mcp.MappingLoader_MCP;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.util.List;
+import java.util.*;
+import java.util.prefs.Preferences;
 
 public class GuiMain extends JFrame {
 
@@ -68,14 +59,14 @@ public class GuiMain extends JFrame {
 
 	synchronized void goButtonPressed() {
 
-		if(curTask != null && curTask.isAlive()) {
+		if (curTask != null && curTask.isAlive()) {
 			return;
 		}
 
 		savePrefs();
 
-		final Operation op = (Operation)opSelect.getSelectedItem();
-		final Side side = (Side)sideSelect.getSelectedItem();
+		final Operation op = (Operation) opSelect.getSelectedItem();
+		final Side side = (Side) sideSelect.getSelectedItem();
 
 		final File mcpDir = new File(mcpField.getText());
 		final File confDir = new File(mcpDir, "conf");
@@ -83,13 +74,13 @@ public class GuiMain extends JFrame {
 
 		String error = null;
 
-		if(!mcpDir.isDirectory()) {
+		if (!mcpDir.isDirectory()) {
 			error = "MCP folder not found (at " + mcpDir + ")";
-		} else if(!confDir.isDirectory()) {
+		} else if (!confDir.isDirectory()) {
 			error = "'conf' folder not found in MCP folder (at " + confDir + ")";
 		}
 
-		if(error != null) {
+		if (error != null) {
 			JOptionPane.showMessageDialog(this, error, "BON - Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -98,13 +89,13 @@ public class GuiMain extends JFrame {
 
 		final File inputFile = new File(inputField.getText());
 
-		if(outputField.getText().equals("")) {
+		if (outputField.getText().equals("")) {
 			// TheAndrey: Better suffix generation
 			File dir = inputFile.getParentFile();
 			String name = inputFile.getName();
 			int dot = name.lastIndexOf(".");
 
-			if(dot > 0) {
+			if (dot > 0) {
 				name = name.substring(0, dot) + "-" + op.defaultNameSuffix + name.substring(dot);
 			} else {
 				name += "." + op.defaultNameSuffix;
@@ -132,7 +123,7 @@ public class GuiMain extends JFrame {
 								@Override
 								public void run() {
 									progressLabel.setText(currentText);
-									if(max >= 0) {
+									if (max >= 0) {
 										progressBar.setMaximum(max);
 									}
 									progressBar.setValue(0);
@@ -166,7 +157,7 @@ public class GuiMain extends JFrame {
 					NameSet refNS = new NameSet(NameSet.Type.MCP, side.nsside, mcVer);
 					Map<String, ClassCollection> refCCList = new HashMap<>();
 
-					for(String s : refPathList) {
+					for (String s : refPathList) {
 						File refPathFile = new File(mcpDir, s);
 
 						progress.start(0, "Reading " + s);
@@ -179,13 +170,15 @@ public class GuiMain extends JFrame {
 					NameSet.Type[] remapTo;
 					NameSet.Type inputType;
 
-					switch(op) {
+					switch (op) {
 						case DEOBFUSCATE_MOD:
 							inputType = NameSet.Type.OBF;
 							remapTo = new NameSet.Type[]{NameSet.Type.SRG, NameSet.Type.MCP};
 							break;
 
 						case REOBFUSCATE_MOD:
+
+						case REOBFUSCATE_MOD_NOTCH:
 							inputType = NameSet.Type.MCP;
 							remapTo = new NameSet.Type[]{NameSet.Type.OBF};
 							break;
@@ -226,13 +219,13 @@ public class GuiMain extends JFrame {
 					 */
 					// remap to obf names from searge names, then searge names to MCP names, in two steps
 					// the first will be a no-op if the mod uses searge names already
-					for(NameSet.Type outputType : remapTo) {
+					for (NameSet.Type outputType : remapTo) {
 						NameSet outputNS = new NameSet(outputType, side.nsside, mcVer);
 
 						List<ClassCollection> remappedRefs = new ArrayList<>();
-						for(Map.Entry<String, ClassCollection> e : refCCList.entrySet()) {
+						for (Map.Entry<String, ClassCollection> e : refCCList.entrySet()) {
 
-							if(inputCC.getNameSet().equals(e.getValue().getNameSet())) {
+							if (inputCC.getNameSet().equals(e.getValue().getNameSet())) {
 								// no need to remap this
 								remappedRefs.add(e.getValue());
 
@@ -284,7 +277,7 @@ public class GuiMain extends JFrame {
 						}
 					});
 				} finally {
-					if(!crashed) {
+					if (!crashed) {
 						SwingUtilities.invokeLater(new Runnable() {
 							@Override
 							public void run() {
@@ -305,19 +298,19 @@ public class GuiMain extends JFrame {
 	private static String getPrintableStackTrace(Throwable e, Set<StackTraceElement> stopAt) {
 		String s = e.toString();
 		int numPrinted = 0;
-		for(StackTraceElement ste : e.getStackTrace()) {
+		for (StackTraceElement ste : e.getStackTrace()) {
 			boolean stopHere = false;
-			if(stopAt.contains(ste) && numPrinted > 0) {
+			if (stopAt.contains(ste) && numPrinted > 0) {
 				stopHere = true;
 			} else {
 				s += "\n    at " + ste.toString();
 				numPrinted++;
-				if(ste.getClassName().startsWith("javax.swing.")) {
+				if (ste.getClassName().startsWith("javax.swing.")) {
 					stopHere = true;
 				}
 			}
 
-			if(stopHere) {
+			if (stopHere) {
 				int numHidden = e.getStackTrace().length - numPrinted;
 				s += "\n    ... " + numHidden + " more";
 				break;
@@ -330,7 +323,7 @@ public class GuiMain extends JFrame {
 		String s = "An error has occurred - give immibis this stack trace (which has been copied to the clipboard)\n";
 
 		s += "\n" + getPrintableStackTrace(e, Collections.emptySet());
-		while(e.getCause() != null) {
+		while (e.getCause() != null) {
 			Set<StackTraceElement> stopAt = new HashSet<>(Arrays.asList(e.getStackTrace()));
 			e = e.getCause();
 			s += "\nCaused by: " + getPrintableStackTrace(e, stopAt);
@@ -418,7 +411,7 @@ public class GuiMain extends JFrame {
 			String mcpDirString = prefs.get(PREFS_KEY_MCPDIR, ".");
 			mcpField.setText(mcpDirString);
 
-			if(!mcpDirString.equals("")) {
+			if (!mcpDirString.equals("")) {
 				mcpBrowseDir.val = new File(mcpDirString);
 			} else {
 				mcpBrowseDir.val = new File(".");
@@ -448,7 +441,7 @@ public class GuiMain extends JFrame {
 	}
 
 	public static void main(String[] args) {
-		if(args.length != 0) {
+		if (args.length != 0) {
 			try {
 				MCPRemap.main(args);
 			} catch (Throwable e) {

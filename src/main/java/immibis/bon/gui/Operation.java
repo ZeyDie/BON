@@ -4,6 +4,7 @@ public enum Operation {
 
 	DEOBFUSCATE_MOD("Deobfuscate mod", "deobf"),
 	REOBFUSCATE_MOD("Reobfuscate mod", "reobf"),
+	REOBFUSCATE_MOD_NOTCH("Reobfuscate mod to Notch names", ".reobf.notch"),
 	REOBFUSCATE_MOD_SRG("Reobfuscate mod to SRG", "srg"),
 	SRGIFY_MOD("Deobfuscate mod to SRG", "srg");
 

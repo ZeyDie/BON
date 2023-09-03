@@ -1,6 +1,5 @@
 plugins {
 	id 'java'
-	id 'maven-publish'
 	id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
@@ -29,10 +28,6 @@ jar {
 	}
 }
 
-shadowJar {
-	relocate 'org.objectweb.asm', 'immibis.bon.org.objectweb.asm'
-}
-
 task sourcesJar(type: Jar) {
 	archiveClassifier.set('sources')
 	from sourceSets.main.allSource
@@ -45,13 +40,3 @@ task javadocJar(type: Jar) {
 
 /* Task dependency */
 tasks.assemble.finalizedBy tasks.shadowJar
-
-publishing {
-	publications {
-		maven(MavenPublication) {
-			from components.java
-			artifact sourcesJar
-			artifact javadocJar
-		}
-	}
-}
